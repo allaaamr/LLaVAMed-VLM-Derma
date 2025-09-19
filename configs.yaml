@@ -1,0 +1,8 @@
+seed: 42
+
+paths:
+  raw: data/raw
+  proc: data/processed
+  splits: data/processed/splits
+  images: data/processed/images
+  vqa: data/processed/vqa
