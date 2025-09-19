@@ -6,3 +6,7 @@ paths:
   splits: data/processed/splits
   images: data/processed/images
   vqa: data/processed/vqa
+
+data:
+  image_size: 224
+  classes: ["akiec","bcc","bkl","df","mel","nv","vasc"]
