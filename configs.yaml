@@ -10,3 +10,9 @@ paths:
 data:
   image_size: 224
   classes: ["akiec","bcc","bkl","df","mel","nv","vasc"]
+
+augment:            
+rotation_deg: 10   
+translate: 0.05  
+brightness: 0.05   
+hflip: true       
