@@ -12,7 +12,18 @@ data:
   classes: ["akiec","bcc","bkl","df","mel","nv","vasc"]
 
 augment:            
-rotation_deg: 10   
-translate: 0.05  
-brightness: 0.05   
-hflip: true       
+  rotation_deg: 10   
+  translate: 0.05  
+  brightness: 0.05   
+  hflip: true       
+
+baseline:
+  model: "resnet18"                   
+  batch_size: 32
+  epochs: 20
+  lr: 5e-4
+
+class_weighting:
+  enabled: true
+  cap: 3.0
+

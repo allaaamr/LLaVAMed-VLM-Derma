@@ -69,7 +69,7 @@ class HamDataset(Dataset):
       Minimal dataset that reads a split CSV (id,label,lesion_id) and returns
       (image_tensor, class_index).
     """
-    def __init__(self, split_csv: Path, images_dir: str | Path, tfm: transforms.Compose):
+    def __init__(self, split_csv: Path, images_dir: str , tfm: transforms.Compose):
         df = pd.read_csv(split_csv)
         # build absolute paths to resized images on disk
         self.paths = [str(Path(images_dir) / f"{iid}.jpg") for iid in df["id"]]
