@@ -27,3 +27,6 @@ class_weighting:
   enabled: true
   cap: 3.0
 
+vqa:
+  question_template: "What is the lesion type? Choose one: {options}."
+  out_dir: data/processed/vqa
