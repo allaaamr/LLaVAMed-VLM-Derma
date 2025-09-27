@@ -36,4 +36,6 @@ vlm:
   max_new_tokens: 8
   temperature: 0.0
   device_map: "auto"     
-  dtype: "auto"        
+  dtype: "auto" 
+
+lava_repo_path: /home/alaa.mohamed/Lab6/LLaVA-Med/

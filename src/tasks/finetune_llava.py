@@ -20,6 +20,7 @@ def finetune_llava(mode="lora"):
     """Fine-tune LLaVA model"""
     
     # Configuration
+    cfg = yaml.safe_load(open("configs.yaml"))
     model_path = "microsoft/llava-med-v1.5-mistral-7b"
     data_path = "data/processed/llava_format/train.json"
     image_folder = "data/processed/images"
@@ -33,9 +34,7 @@ def finetune_llava(mode="lora"):
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     
     print(f"====================================")
-    print(f"🚀 LLaVA Fine-tuning Mode: {mode}")
-    print(f"📊 Data: {Path(data_path).name}")
-    print(f"💾 Output: checkpoints/{mode}/")
+    print(f"LLaVA Fine-tuning Mode: {mode}")
     print(f"====================================")
     
     # Common arguments
@@ -71,8 +70,8 @@ def finetune_llava(mode="lora"):
     """
     
     if mode == "lora":
-        print("⚡ Starting LoRA training (~2-3 hours)...")
-        cmd = f"""deepspeed llava/train/train_mem.py \\
+        print("Starting LoRA training (~2-3 hours)..")
+        cmd = f"""deepspeed {cfg["lava_repo_path"]}/llava/train/train_mem.py \\
             --lora_enable True \\
             --lora_r 256 \\
             --lora_alpha 512 \\
@@ -85,23 +84,23 @@ def finetune_llava(mode="lora"):
             {common_args}"""
             
     elif mode == "full":
-        print("🔥 Starting full fine-tuning (~6-8 hours)...")
-        cmd = f"""deepspeed llava/train/train_mem.py \\
+        print("Starting full fine-tuning (~6-8 hours)...")
+        cmd = f"""deepspeed {cfg["lava_repo_path"]}/llava/train/train_mem.py \\
             --deepspeed ./scripts/zero2.json \\
             --per_device_train_batch_size 6 \\
             --gradient_accumulation_steps 1 \\
             --learning_rate 1e-5 \\
             {common_args}"""
     else:
-        print(f"❌ Invalid mode: {mode}")
+        print(f"Invalid mode: {mode}")
         return False
     
-    # Run training
+    #  training
     success = run_command(cmd)
     
     if success:
         print(f"====================================")
-        print(f"✅ Training completed!")
+        print(f"Training completed!")
         print(f"📁 Model saved to: {output_dir}")
         run_command("nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader,nounits")
         print(f"====================================")
