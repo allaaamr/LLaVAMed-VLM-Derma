@@ -30,16 +30,12 @@ def compute_metrics(y_true: np.ndarray, logits: np.ndarray) -> dict:
         "confusion": confusion_matrix(y_true, preds).tolist(),
     }
 
-# def compute_metrics(y_true: list[str], y_pred: list[str], classes: list[str]) -> dict:
-#     """WHY: Single implementation of Accuracy, macro-F1, confusion (optional AUC).
-#        WHAT: Return {'accuracy', 'f1_macro', 'confusion', ...} using the same logic
-#              for all models so tables are apples-to-apples."""
+
+
 
 
 def run_epoch(model, loader, device, criterion, optimizer=None):
     """
-    WHY: One routine for train or eval depending on optimizer presence.
-    RETURNS: avg_loss, logits(np.ndarray), labels(np.ndarray)
     """
     is_train = optimizer is not None
     model.train(is_train)

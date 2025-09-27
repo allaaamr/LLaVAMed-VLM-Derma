@@ -2,76 +2,59 @@ import argparse
 import json
 from pathlib import Path
 from typing import List
-
 import numpy as np
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 import yaml
-
-from src.vqa_utils import (
-    build_prompt,
-    parse_to_label,
-    load_split_items,
-    open_rgb_image,
-    load_vlm_model,
-)
+from src.visualize import  plot_training_curves, plot_confusion_matrix, plot_roc_curves, plot_per_class_report, plot_prob_histogram
+from src.vqa_utils import parse_to_label
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs.yaml")
     ap.add_argument("--split", default="test", choices=["train", "val", "test"])
-    ap.add_argument("--save_csv", action="store_true", help="Write per-sample preds CSV")
     args = ap.parse_args()
 
     cfg = yaml.safe_load(open(args.config))
     classes: List[str] = cfg["data"]["classes"]                   
-    vqa_dir = Path(cfg["paths"].get("vqa", "data/processed/vqa"))
-    model_id = cfg["vlm"]["model_id"]
-    prompt_tmpl = cfg["vlm"]["prompt_template"]
-    max_new = int(cfg["vlm"].get("max_new_tokens", 8))
-    temperature = float(cfg["vlm"].get("temperature", 0.0))
-    device_map = cfg["vlm"].get("device_map", "auto")
-    dtype = cfg["vlm"].get("dtype", "auto")
 
-    # ------------------ Load items --------------------
-    # jsonl_path = vqa_dir / f"{args.split}.jsonl"
-    # items = load_split_items(jsonl_path)
-    # if not items:
-    #     print(f"[error] No items loaded from {jsonl_path}")
-    #     return
+ 
+    questions = {}
+    with open("data/processed/vqa/test.jsonl", "r", encoding="utf-8") as f:
+        for line in f:
+            obj = json.loads(line)
+            questions[obj["question_id"]] = obj["answer"]
 
-    # ------------------ Load model --------------------
-    processor, model = load_vlm_model(model_id, device_map=device_map, dtype=dtype)
-    model.eval()
+    # Load model predictions
+    preds = {}
+    with open("results/eval_results/answers.jsonl", "r", encoding="utf-8") as f:
+        for line in f:
+            obj = json.loads(line)
+            preds[obj["question_id"]] = obj["text"]
+
+    # Build aligned lists
+    y_true, y_pred = [], []
+    for qid, ans in questions.items():
+        if qid in preds:
+            y_true.append(ans.strip())
+            y_pred.append(preds[qid].strip())
 
     # ------------------ Evaluate ----------------------
-    y_true, y_pred= [], [], []
-    for rec in items:
-        # 1) Load image in RGB (processor handles resize/normalize internally)
-        img = open_rgb_image(rec["image"])
+    y_true, y_pred= [], []
+    for qid, ans in questions.items():
 
-        # 2) Encode multimodal input
-        inputs = processor(text=prompt, images=img, return_tensors="pt").to(model.device)
+        # Add true answer label
+        y_true.append(ans.strip())
 
-        # 3) Generate one short answer (closed-ended; no sampling by default)
-        with np.errstate(all="ignore"):
-            outputs = model.generate(
-                **inputs,
-                max_new_tokens=max_new,
-                do_sample=temperature > 0.0,
-                temperature=temperature if temperature > 0.0 else None,
-            )
+        # Add predicted text but 
+        # parse it to one of 7 labels (or None if hallucinated)
+        pred = parse_to_label(preds[qid], classes) or "__other__"
 
-        text = processor.batch_decode(outputs, skip_special_tokens=True)[0]
-
-        # 4) Parse to one of 7 labels (or None if hallucinated)
-        pred = parse_to_label(text, classes) or "__other__"
-
-        y_true.append(rec["answer"])
         y_pred.append(pred)
-        raw_lines.append((rec["id"], rec["answer"], pred, text))
-
+    
+    print(y_true[:10])
+    print(y_pred[:10])
     # ------------------ Metrics -----------------------
-    # Treat out-of-vocab as incorrect label "zzz" to keep scorers happy
+    # Treat out-of-vocab as incorrect label "zzz" to keep scorers ha
     pred_for_metrics = [p if p in classes else "zzz" for p in y_pred]
     acc = accuracy_score(y_true, pred_for_metrics)
     f1 = f1_score(y_true, pred_for_metrics, labels=classes, average="macro")
@@ -79,6 +62,15 @@ def main():
     # Confusion matrix only for in-vocab predictions (to keep shape = 7x7)
     mask = [p in classes for p in y_pred]
     cm = confusion_matrix(np.array(y_true)[mask], np.array(y_pred)[mask], labels=classes)
+
+    # visualizations 
+    plot_confusion_matrix(np.array(cm), classes,  "figures/baseline_confusion_eval_vlm.png")
+    # plot_roc_curves(ytest, Ltest, classes, fig_dir / "baseline_roc.png")
+    # plot_per_class_report(ytest, Ltest, classes, fig_dir / "baseline_prf.png")
+    # plot_prob_histogram(ytest, Ltest, fig_dir / "baseline_confidence.png")
+    # print(f"[figures] saved to {fig_dir.resolve()}")
+
+
 
     print(f"[VLM zero-shot] split={args.split}")
     print(f"Accuracy : {acc:.4f}")

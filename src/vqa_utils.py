@@ -21,15 +21,7 @@ from transformers import AutoProcessor, LlavaForConditionalGeneration
 
 #------- Prompt Building --------#
 
-def build_prompt(options: List[str], template: str) -> str:
-    """ A single, closed-ended instruction that both zero-shot and fine-tuned
-       use to avoid prompt drift. 
-       It sills {options} placeholder with the
-       canonical class set (comma-separated), return final text containing <image> cue."""
-    options_str = ",".join(options)
-    return template.format(options=options_str)
 
-#---------- Parsing ------------#
 
 def normalize_text(s: str) -> str:
     """
@@ -83,6 +75,7 @@ def parse_to_label(text: str, classes: List[str]) -> Optional[str]:
     """
     Centralize the coercion of free text into one of 7 labels.
     """
+    print("before " , text)
     norm = normalize_text(text)
     tokens = norm.split()
     aliases = alias_map()
@@ -90,18 +83,21 @@ def parse_to_label(text: str, classes: List[str]) -> Optional[str]:
     # exact token present?
     for c in classes:
         if c in tokens:
+            print(c)
             return c
 
     #  any alias phrase present?
     for phrase, canon in aliases.items():
         if phrase in norm:
+            print(canon)
             return canon
 
     # substring fallback 
     for c in classes:
         if c in norm:
+            print("fallback ", c)
             return c
-
+    print("No match")
     # No match 
     return None
 
