@@ -8,8 +8,6 @@ from PIL import Image
 from transformers import AutoProcessor, LlavaForConditionalGeneration
 
 """
-A compact core module for VLM-based closed-ended VQA on HAM10000.
-
 - build_prompt:       Fills the closed-ended prompt with the 7-class options.
 - normalize_text:     Makes model outputs easy to parse (lowercase, strip punctuation).
 - alias_map:          mapping from clinical phrases to the 7 labels.
@@ -19,10 +17,9 @@ A compact core module for VLM-based closed-ended VQA on HAM10000.
 - apply_lora_adapters:Attach LoRA/QLoRA adapters, freezing base.
 - load_split_items:   Read JSONL items.
 - open_rgb_image:     Load images as RGB (what HF processors expect).
-
 """
 
-#--------- Prompt Building ---------#
+#------- Prompt Building --------#
 
 def build_prompt(options: List[str], template: str) -> str:
     """ A single, closed-ended instruction that both zero-shot and fine-tuned
@@ -116,52 +113,41 @@ def target_from_record(rec: dict) -> str:
         raise KeyError("Record missing a valid 'answer' string.")
     return rec["answer"]
 
-# ---------Model I/O ------------#
-def load_vlm_model(model_id: str, device_map: str = "auto", dtype: str = "auto"):
-    # import inside to avoid hard dependency at import time
-    try:
-        from transformers import AutoProcessor, LlavaForConditionalGeneration
-        has_llava_cls = True
-    except Exception:
-        from transformers import AutoProcessor, AutoModelForCausalLM
-        has_llava_cls = False
+def load_vlm_model(model_id: str, dtype: str = "auto", device_map: str = "auto"):
+    """
+    Load a VLM (LLaVA-Med) as (processor, model).
 
-    import torch  # needed for torch.float16/32
-    def _resolve(dtype_str):
-        if dtype_str in (None, "auto"): return None
-        s = str(dtype_str).lower()
-        if s in ("float16", "fp16", "half"): return torch.float16
-        if s in ("bfloat16", "bf16"): return torch.bfloat16
-        if s in ("float32", "fp32"): return torch.float32
-        raise ValueError(f"Unsupported dtype: {dtype_str}")
+    Args:
+        model_id: Hugging Face repo ("llava-hf/llava-med-7b").
+        dtype: "auto" | "bf16" | "fp16" | "fp32"
+        device_map: passed to Transformers (e.g., "auto", {"":0}, "cpu")
 
-    torch_dtype = _resolve(dtype)
+    Returns:
+        processor, model
+    """
+    import torch
+    from transformers import AutoProcessor, AutoModelForVision2Seq
 
-    processor = AutoProcessor.from_pretrained(model_id)
-    if has_llava_cls:
-        model = LlavaForConditionalGeneration.from_pretrained(
-            model_id,
-            device_map=device_map,
-            torch_dtype=torch_dtype,
-            low_cpu_mem_usage=True,
-            attn_implementation="sdpa",
-        )
+    if dtype == "auto":
+        torch_dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+    elif dtype == "bf16":
+        torch_dtype = torch.bfloat16
+    elif dtype == "fp16":
+        torch_dtype = torch.float16
     else:
-        # Repo will supply custom modeling via remote code
-        from transformers import AutoModelForCausalLM
-        model = AutoModelForCausalLM.from_pretrained(
-            model_id,
-            device_map=device_map,
-            torch_dtype=torch_dtype,
-            low_cpu_mem_usage=True,
-            trust_remote_code=True,
-        )
+        torch_dtype = torch.float32
+
+    processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
+    model = AutoModelForVision2Seq.from_pretrained(
+        model_id,
+        torch_dtype=torch_dtype,
+        device_map=device_map,
+        trust_remote_code=True,
+    )
+    model.eval()
     return processor, model
 
-
-
-# --------- Data VQA ------------#
-
+#--------- Data VQA ----------#
 
 def load_split_items(jsonl_path: "Path") -> List[Dict]:
     """ Standardize I/O. Read {id,image,question,options,answer,answer_idx}

@@ -99,6 +99,5 @@ def main():
     plot_prob_histogram(ytest, Ltest, fig_dir / "baseline_confidence.png")
     print(f"[figures] saved to {fig_dir.resolve()}")
 
-
 if __name__ == "__main__":
     main()
