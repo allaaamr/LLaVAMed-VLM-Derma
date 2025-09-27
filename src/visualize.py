@@ -1,6 +1,10 @@
-# src/visualize.py
+from pathlib import Path
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, auc, precision_recall_fscore_support
+
 """
-  Common training/evaluation visualizations for fast diagnostics and report figures.
+   training/evaluation visualizations
 
   - plot_training_curves(history, out_path): loss & metric curves across epochs
   - plot_confusion_matrix(cm, classes, out_path): heatmap of test confusion
@@ -9,16 +13,12 @@
   - plot_prob_histogram(y_true, logits, out_path): confidence hist (max-prob) for correct vs wrong
 
   - history: list of dicts per epoch with keys:
-      {'tr_loss', 'va_loss', 'va_acc', 'va_f1', 'va_auc'}  (you’ll record these)
+      {'tr_loss', 'va_loss', 'va_acc', 'va_f1', 'va_auc'} 
   - y_true: 1D np.array of int labels (N,)
   - logits: 2D np.array of raw scores (N, C)
   - cm:     2D np.array confusion matrix (C, C)
 """
 
-from pathlib import Path
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.metrics import roc_curve, auc, precision_recall_fscore_support
 
 def _ensure_parent(out_path):
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
