@@ -113,40 +113,6 @@ def target_from_record(rec: dict) -> str:
         raise KeyError("Record missing a valid 'answer' string.")
     return rec["answer"]
 
-def load_vlm_model(model_id: str, dtype: str = "auto", device_map: str = "auto"):
-    """
-    Load a VLM (LLaVA-Med) as (processor, model).
-
-    Args:
-        model_id: Hugging Face repo ("llava-hf/llava-med-7b").
-        dtype: "auto" | "bf16" | "fp16" | "fp32"
-        device_map: passed to Transformers (e.g., "auto", {"":0}, "cpu")
-
-    Returns:
-        processor, model
-    """
-    import torch
-    from transformers import AutoProcessor, AutoModelForVision2Seq
-
-    if dtype == "auto":
-        torch_dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
-    elif dtype == "bf16":
-        torch_dtype = torch.bfloat16
-    elif dtype == "fp16":
-        torch_dtype = torch.float16
-    else:
-        torch_dtype = torch.float32
-
-    processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
-    model = AutoModelForVision2Seq.from_pretrained(
-        model_id,
-        torch_dtype=torch_dtype,
-        device_map=device_map,
-        trust_remote_code=True,
-    )
-    model.eval()
-    return processor, model
-
 #--------- Data VQA ----------#
 
 def load_split_items(jsonl_path: "Path") -> List[Dict]:

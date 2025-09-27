@@ -28,18 +28,11 @@ class_weighting:
   cap: 3.0
 
 vqa:
-  question_template: "What is the lesion type? Choose one: {options}."
+  question_template: "You are a medical vision assistant. Answer with EXACTLY one label from: akiec, bcc, bkl, df, mel, nv, vasc. Do not output anything else. Just the single label. What is the lesion type?"
   out_dir: data/processed/vqa
 
 vlm:
   model_id: "microsoft/llava-med-v1.5-mistral-7b"
-  prompt_template: |
-    You are a medical vision assistant. Answer with EXACTLY one label from:
-    {options}
-    Do not output anything else. Just the single label.
-    USER: <image>
-    Question: What is the lesion type?
-    ASSISTANT:
   max_new_tokens: 8
   temperature: 0.0
   device_map: "auto"     

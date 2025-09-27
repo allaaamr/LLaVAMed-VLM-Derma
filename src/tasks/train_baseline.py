@@ -8,7 +8,7 @@ from src.visualize import  plot_training_curves, plot_confusion_matrix, plot_roc
 
 
 """
-  Train a 7-class baseline (CNN/ViT) using the same csv splits 
+   7-class baseline (CNN/ViT) 
 """
 
 def class_weights_from_train(train_labels: np.ndarray, n_classes: int, cap: float = 3.0) -> np.ndarray:

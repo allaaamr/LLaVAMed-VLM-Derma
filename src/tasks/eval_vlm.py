@@ -33,21 +33,18 @@ def main():
     dtype = cfg["vlm"].get("dtype", "auto")
 
     # ------------------ Load items --------------------
-    jsonl_path = vqa_dir / f"{args.split}.jsonl"
-    items = load_split_items(jsonl_path)
-    if not items:
-        print(f"[error] No items loaded from {jsonl_path}")
-        return
+    # jsonl_path = vqa_dir / f"{args.split}.jsonl"
+    # items = load_split_items(jsonl_path)
+    # if not items:
+    #     print(f"[error] No items loaded from {jsonl_path}")
+    #     return
 
     # ------------------ Load model --------------------
     processor, model = load_vlm_model(model_id, device_map=device_map, dtype=dtype)
     model.eval()
 
     # ------------------ Evaluate ----------------------
-    options = ",".join(classes)                          # e.g. "akiec,bcc,bkl,df,mel,nv,vasc"
-    prompt = build_prompt(classes, prompt_tmpl)          # closed-ended prompt (with <image> cue)
-
-    y_true, y_pred, raw_lines = [], [], []
+    y_true, y_pred= [], [], []
     for rec in items:
         # 1) Load image in RGB (processor handles resize/normalize internally)
         img = open_rgb_image(rec["image"])

@@ -19,8 +19,7 @@ import yaml
       {
         "id": <image_id>,
         "image": "data/processed/images/<file>.jpg",
-        "question": "What is the lesion type?...",
-        "options": ["akiec","bcc","bkl","df","mel","nv","vasc"],
+        question": "You are a medical vision assistant. Answer with EXACTLY one label from: akiec, bcc, bkl, df, mel, nv, vasc. Do not output anything else. Just the single label. What is the lesion type?",
         "answer": "nv",
         "answer_idx": 5,
         "template_id": "lesion_7way_v1"
@@ -28,7 +27,7 @@ import yaml
 
 OPTIONAL CONFIG:
   vqa:
-    question_template: "What is the lesion type? Choose one: {options}."
+    question_template: "You are a medical vision assistant. Answer with EXACTLY one label from: akiec, bcc, bkl, df, mel, nv, vasc. Do not output anything else. Just the single label. What is the lesion type?",
     out_dir: data/processed/vqa
 """
 
@@ -41,9 +40,6 @@ def load_cfg(cfg_path: str) -> dict:
    
     """
     cfg = yaml.safe_load(open(cfg_path))
-    cfg.setdefault("vqa", {})
-    cfg["vqa"].setdefault("question_template",
-        "What is the lesion type? Choose one: {options}.")
     # prefer vqa.out_dir if provided, else paths.proc/vqa, else data/processed/vqa
     out_dir = cfg["vqa"].get("out_dir")
     if out_dir is None:
@@ -85,19 +81,17 @@ def read_split_csv(csv_path: Path, classes: list[str], images_root: Path) -> pd.
     # 4) Return needed columns 
     return df[["id", "image", "label", "label_idx", "lesion_id"]]
 
-def build_record(row: pd.Series, classes: List[str], q_template: str) -> Dict:
+def build_record(row: pd.Series, classes: List[str], question: str) -> Dict:
     """
     Create a single closed-ended VQA item from one image row.
     Fills question text with option list and stores both string and index answers.
     """
-    options = ",".join(classes)  # textual list for the prompt
     return {
-        "id": row["id"],
+        "question_id": row["id"],
         "image": row["image"],
-        "question": q_template.format(options=options),
-        "options": classes,
+        "text": question,
         "answer": row["label"],
-        "answer_idx": int(row["label_idx"]),
+        "answer_id": int(row["label_idx"]),
         "template_id": "lesion_7way_v1",
     }
 
@@ -140,12 +134,12 @@ def main():
     splits_dir = Path(cfg["paths"]["splits"])
     images_root = Path(cfg["paths"]["images"])
     out_dir = Path(cfg["vqa"]["out_dir"])
-    q_template = cfg["vqa"]["question_template"]
+    question = cfg["vqa"]["question_template"]
 
     # Generate for all three splits
     total = 0
     for split in ["train", "val", "test"]:
-        total += make_split_jsonl(split, splits_dir, classes, images_root, out_dir, q_template)
+        total += make_split_jsonl(split, splits_dir, classes, images_root, out_dir, question)
 
     # Final consistency hint
     if total == 0:
