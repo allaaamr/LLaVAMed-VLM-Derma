@@ -8,25 +8,21 @@ import yaml
 from src.visualize import  plot_training_curves, plot_confusion_matrix, plot_roc_curves, plot_per_class_report, plot_prob_histogram
 from src.vqa_utils import parse_to_label
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--config", default="configs.yaml")
-    ap.add_argument("--split", default="test", choices=["train", "val", "test"])
-    args = ap.parse_args()
+def eval_vlm(args):
 
-    cfg = yaml.safe_load(open(args.config))
+    cfg = yaml.safe_load(open("configs.yaml"))
     classes: List[str] = cfg["data"]["classes"]                   
 
  
     questions = {}
-    with open("data/processed/vqa/test.jsonl", "r", encoding="utf-8") as f:
+    with open(args.true_answers_path, "r", encoding="utf-8") as f:
         for line in f:
             obj = json.loads(line)
-            questions[obj["question_id"]] = obj["answer"]
+            questions[obj["question_id"]] = obj["answer"]  
 
     # Load model predictions
     preds = {}
-    with open("results/eval_results/answers.jsonl", "r", encoding="utf-8") as f:
+    with open(args.pred_answers_path, "r", encoding="utf-8") as f:
         for line in f:
             obj = json.loads(line)
             preds[obj["question_id"]] = obj["text"]
@@ -65,20 +61,22 @@ def main():
 
     # visualizations 
     plot_confusion_matrix(np.array(cm), classes,  "figures/baseline_confusion_eval_vlm.png")
-    # plot_roc_curves(ytest, Ltest, classes, fig_dir / "baseline_roc.png")
-    # plot_per_class_report(ytest, Ltest, classes, fig_dir / "baseline_prf.png")
-    # plot_prob_histogram(ytest, Ltest, fig_dir / "baseline_confidence.png")
-    # print(f"[figures] saved to {fig_dir.resolve()}")
 
 
 
-    print(f"[VLM zero-shot] split={args.split}")
     print(f"Accuracy : {acc:.4f}")
     print(f"Macro-F1 : {f1:.4f}")
     print("Confusion (rows=true, cols=pred):")
     print(cm)
 
 
+def main():
+    parser = argparse.ArgumentParser(description="Evaluate LLaVA model")
+    parser.add_argument("--true_answers_path",  default="data/processed/vqa_prompt1/test.jsonl")
+    parser.add_argument("--pred_answers_path",  default="results/finetune_checkpoint1000_results_prompt1.jsonl")
+    
+    args = parser.parse_args()
+    eval_vlm(args)
 
 if __name__ == "__main__":
     main()

@@ -62,8 +62,7 @@ def read_split_csv(csv_path: Path, classes: list[str], images_root: Path) -> pd.
     """
     df = pd.read_csv(csv_path, dtype={"id": str, "label": str, "lesion_id": str})
 
-    # 1) Build absolute image path: data/processed/images/{id}.jpg
-    df["image"] = df["id"].map(lambda s: str(images_root / f"{s}.jpg"))
+    df["image"] = df["id"].astype(str).str.strip() + ".jpg"
 
     # 2) Map label -> label_idx using your canonical order
     class_to_idx = {c: i for i, c in enumerate(classes)}
@@ -73,7 +72,7 @@ def read_split_csv(csv_path: Path, classes: list[str], images_root: Path) -> pd.
     before = len(df)
     df = df[df["label_idx"].notna()].copy()
     df["label_idx"] = df["label_idx"].astype(int)
-    df = df[df["image"].map(lambda p: Path(p).exists())]
+    # df = df[df["image"].map(lambda p: Path(p).exists())]
     dropped = before - len(df)
     if dropped > 0:
         print(f"[warn] Dropped {dropped} rows in '{csv_path.name}' (bad label or missing image).")

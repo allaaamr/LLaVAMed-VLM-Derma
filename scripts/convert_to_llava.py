@@ -46,8 +46,8 @@ def main():
     """Convert all VQA files to LLaVA format"""
     
     base_dir = "/home/alaa.mohamed/VQA-VLM-Derma"
-    vqa_dir = f"{base_dir}/data/processed/vqa"
-    llava_dir = f"{base_dir}/data/processed/llava_format"
+    vqa_dir = f"{base_dir}/data/processed/vqa_prompt2"
+    llava_dir = f"{base_dir}/data/processed/llava_format_prompt2"
     
     # Convert train, val, test
     for split in ["train", "val", "test"]:

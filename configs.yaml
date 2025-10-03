@@ -28,8 +28,8 @@ class_weighting:
   cap: 3.0
 
 vqa:
-  question_template: "You are a medical vision assistant. Answer with EXACTLY one label from: akiec, bcc, bkl, df, mel, nv, vasc. Do not output anything else. Just the single label. What is the lesion type?"
-  out_dir: data/processed/vqa
+  question_template: "Classify this skin lesion. Answer with only one label: akiec, bcc, bkl, df, mel, nv, or vasc."
+  out_dir: data/processed/vqa_prompt5
 
 vlm:
   model_id: "microsoft/llava-med-v1.5-mistral-7b"

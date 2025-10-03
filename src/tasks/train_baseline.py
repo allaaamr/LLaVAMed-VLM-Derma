@@ -39,7 +39,7 @@ def main():
 
     # ---- model: pick any timm architecture by name from config ----
     #  "resnet18", "resnet50", "vit_base_patch16_224", etc.
-    model = build_timm_model(cfg["baseline"]["model"], num_classes=n).to(device)
+    model = build_timm_model(cfg["baseline"]["model"], num_classes=n, drop_rate=0.2).to(device)
 
     # weighted CE loss (optional cap from config)
     ytr = np.array(ds["train"].labels)

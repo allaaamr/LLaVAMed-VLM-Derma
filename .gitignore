@@ -1,2 +1,5 @@
 /data/raw
 *.jpg
+checkpoints/
+wandb/
+*.pyc
