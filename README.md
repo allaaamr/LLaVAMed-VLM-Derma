@@ -1,4 +1,4 @@
-# VQA-VLM-Derma: Vision-Language Models for Dermatological Classification
+# Vision-Language Models for Dermatological Classification
 
 ## 📋 Overview 
 
